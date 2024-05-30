@@ -1,0 +1,2 @@
+moveit_needle_sim:needle_path_simulation
+-DCATKIN_DEVEL_PREFIX=/home/rosbox/needle_insert_simulation_ws/devel -DCMAKE_INSTALL_PREFIX=/home/rosbox/needle_insert_simulation_ws/install -G Unix Makefiles

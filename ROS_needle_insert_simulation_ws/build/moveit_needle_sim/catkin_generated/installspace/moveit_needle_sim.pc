@@ -1,0 +1,8 @@
+prefix=/home/rosbox/needle_insert_simulation_ws/install
+
+Name: moveit_needle_sim
+Description: Description of moveit_needle_sim
+Version: 0.3.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

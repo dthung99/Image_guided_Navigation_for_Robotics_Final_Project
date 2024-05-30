@@ -1,0 +1,36 @@
+# Moveit configuration
+planning_time_limit: 10.0 # Increase time limit for path planning
+jump_threshold: 5.0 # Set this to 0 if continuously fail to plan the path, WARNING: Setting to zero risk jumping of robot joints
+task_space_discretize_distance: 0.001 # The distance between consecutive waypoints along the Cartesian path when inserting the needle = 0.001 m
+# Setting time duration to move the robot (~ 1/speed). The robot will take exact ammount of time to finish the action
+# even if no movement is needed for the action after path planning. So just wait if you don't see it moving!!!
+starting_duration: 5.0 # Time to move from starting position to initial pose 
+insert_needle_duration: 3.0 # Time to move from initial pose to target pose (insert needle)
+remove_needle_duration: 3.0 # Time to move from target pose to initial pose (remove needle)
+
+# GUI text position
+GUI_text_height: 1.0 # Set the height of GUI text in RVIZ
+
+# Network configuration
+RIB_server_ip: "10.0.2.2"
+RIB_port: 18944
+RIB_type: "client"
+
+# 3D slice variable for exchanging information
+entry_point_name: "entry_point" # Name of entry_point in 3D slicer
+target_point_name: "target_point" # Name of target_point in 3D slicer
+slicer_scale: 0.001 # 3D slicer unit is 1 mm 
+# Setting color of brain mesh
+brain_mesh/color/a: 0.5
+brain_mesh/color/r: 1.0
+brain_mesh/color/g: 1.0
+brain_mesh/color/b: 0.0
+
+# Robot setup: the direct of the needle in the end effector frame
+# Name of planning group and baselink of your customize robot
+planning_group: "robot_arm" # Name of the planning group that is set in ROS
+BASE_LINK: "base_link" # Name of the link that is attached to world frame
+# Change this if you want to use another robot, it should be a unit vector
+needle_orientation_in_end_effector_frame/x: 0.0
+needle_orientation_in_end_effector_frame/y: 0.0
+needle_orientation_in_end_effector_frame/z: 1.0

@@ -1,0 +1,5 @@
+<launch>
+   <rosparam command="load" file="$(find needle_path_simulation)/config/user_parameters.yaml" />
+   <node pkg="ros_igtl_bridge" type="ros_igtl_bridge_node" name="ros_igtl_bridge_node" output="screen"/>
+   <node name="move_robot" pkg="needle_path_simulation" type="move_robot" output="screen"/>
+</launch>

@@ -231,20 +231,26 @@ class Needle_Path_PlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMix
         """Run processing when user clicks "Summarize the data and create models from label maps" button."""
         with slicer.util.tryWithErrorDisplay(_("Failed to compute results."), waitCursor=True):
             # Compute output
-            self.logic.summarize_Data_and_Create_Model(self._parameterNode.entryPoints, self._parameterNode.targetPoints)
+            self.logic.summarize_Data_and_Create_Model(self._parameterNode.entryPoints, self._parameterNode.targetPoints, True)
 
     def onApplyButton(self) -> None:
         """Run processing when user clicks "Apply and execute path planning" button."""
         with slicer.util.tryWithErrorDisplay(_("Failed to compute results."), waitCursor=True):
             # Compute output
-            self.logic.process(entryPoints = self._parameterNode.entryPoints,
-                               targetPoints = self._parameterNode.targetPoints,
-                               hypothalamusLabelMap = self._parameterNode.hypothalamusLabelMap,
-                               vesselsLabelMap = self._parameterNode.vesselsLabelMap,
-                               ventricleLabelMap = self._parameterNode.ventricleLabelMap,
-                               cortexLabelMap = self._parameterNode.cortexLabelMap,
-                               cortexangleThreshold = self.ui.cortexangleThreshold.value)
-            self.ui.prepareROSData.enabled = True
+            result = self.logic.process(entryPoints = self._parameterNode.entryPoints,
+                                        targetPoints = self._parameterNode.targetPoints,
+                                        hypothalamusLabelMap = self._parameterNode.hypothalamusLabelMap,
+                                        vesselsLabelMap = self._parameterNode.vesselsLabelMap,
+                                        ventricleLabelMap = self._parameterNode.ventricleLabelMap,
+                                        cortexLabelMap = self._parameterNode.cortexLabelMap,
+                                        cortexangleThreshold = self.ui.cortexangleThreshold.value,
+                                        needleCutOffLength = self.ui.needleCutOffLength.value,
+                                        printResult = True)
+            # Turn the prepare ROS data button on if a Path can be found
+            if (result):
+                self.ui.prepareROSData.enabled = True
+            else:
+                self.ui.prepareROSData.enabled = False
 
     def prepareROSData(self) -> None:
         """Run processing when user clicks "Prepare data to send to ROS" button."""
@@ -261,27 +267,29 @@ class Needle_Path_PlanningLogic(ScriptedLoadableModuleLogic):
     def getParameterNode(self):
         return Needle_Path_PlanningParameterNode(super().getParameterNode())
 
-    def summarize_Data_and_Create_Model(self, entryNode, targetNode):
+    def summarize_Data_and_Create_Model(self, entryNode, targetNode, printResult: bool = True):
         """Summarize the data and create model, segmentation"""
         # Get number of entry and target point
         n_Entry = entryNode.GetNumberOfControlPoints()
         n_Target = targetNode.GetNumberOfControlPoints()
-        print(f"Number of entries is: {n_Entry}")
-        print(f"Number of targets is: {n_Target}")
-        # Create segmentation and model from label map
-        list_of_Label_nodes = slicer.util.getNodesByClass("vtkMRMLLabelMapVolumeNode")
-        exportModelFolderItemId = self.simple_Task_Create_Folder("Models")
-        exportSegmentFolderItemId = self.simple_Task_Create_Folder("Segments")
-        for i, node in enumerate(list_of_Label_nodes):
-            seg = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentationNode")
-            seg.SetName("Segmentation"+node.GetName())
-            self.shNode.SetItemParent(self.shNode.GetItemByDataNode(seg), exportSegmentFolderItemId)
-            slicer.modules.segmentations.logic().ImportLabelmapToSegmentationNode(node, seg)
-            slicer.modules.segmentations.logic().ExportAllSegmentsToModels(seg, exportModelFolderItemId)
-            self.shNode.SetItemName(self.shNode.GetItemChildWithName(exportModelFolderItemId, "1"), "Model_"+ node.GetName())
-        self.shNode.SetItemParent(exportModelFolderItemId, self.shNode.GetItemParent(exportSegmentFolderItemId))
-        self.shNode.SetItemExpanded(exportSegmentFolderItemId, 0)
-        return n_Entry, n_Target, exportModelFolderItemId, exportSegmentFolderItemId
+        if printResult:
+            self.simple_Task_Print_Output(f"Number of entries is: {n_Entry}")
+            self.simple_Task_Print_Output(f"Number of targets is: {n_Target}")
+        # # Create segmentation and model from label map
+        # list_of_Label_nodes = slicer.util.getNodesByClass("vtkMRMLLabelMapVolumeNode")
+        # exportModelFolderItemId = self.simple_Task_Create_Folder("Models")
+        # exportSegmentFolderItemId = self.simple_Task_Create_Folder("Segments")
+        # for i, node in enumerate(list_of_Label_nodes):
+        #     seg = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentationNode")
+        #     seg.SetName("Segmentation"+node.GetName())
+        #     self.shNode.SetItemParent(self.shNode.GetItemByDataNode(seg), exportSegmentFolderItemId)
+        #     slicer.modules.segmentations.logic().ImportLabelmapToSegmentationNode(node, seg)
+        #     slicer.modules.segmentations.logic().ExportAllSegmentsToModels(seg, exportModelFolderItemId)
+        #     self.shNode.SetItemName(self.shNode.GetItemChildWithName(exportModelFolderItemId, "1"), "Model_"+ node.GetName())
+        # self.shNode.SetItemParent(exportModelFolderItemId, self.shNode.GetItemParent(exportSegmentFolderItemId))
+        # self.shNode.SetItemExpanded(exportSegmentFolderItemId, 0)
+        return n_Entry, n_Target
+        # return n_Entry, n_Target, exportModelFolderItemId, exportSegmentFolderItemId
     def check_A_Point_in_List_Is_In_A_Label_Volume_Node(self, input_point_array: np.ndarray((100,3)), label_volume_node: vtkMRMLLabelMapVolumeNode, strictly_inside_mode = True):
         """Get a list of point as np.array and a label volume node"""
         """Return a np.array(-1,) of boolean where True if a point is inside, and False if it is outside"""
@@ -316,6 +324,17 @@ class Needle_Path_PlanningLogic(ScriptedLoadableModuleLogic):
                 if np.sum(matrix_surround_current_point) == 8:
                     result[i] = True
                 pass
+        return result
+    def check_A_Line_in_List_Is_Smaller_Than_A_Cut_Off(self, input_line_list, cut_off):
+        """Get a list of lines as np.array and a cut off value"""
+        """Return a np.array((-1,)) of the same length as the list.
+        The Array will equal True if the vector in the list is less than a cut
+        off value, and False if it is higher than a cut off value"""
+        if type(input_line_list) != np.ndarray:
+            return "check_A_Line_in_List_Is_Smaller_Than_A_Cut_Off failed: Input lines need to be a np.ndarray"
+        result = input_line_list[:,1,:] - input_line_list[:,0,:]
+        result = np.linalg.norm(result, axis=-1)
+        result = result <= cut_off
         return result
     def get_Square_Distance_from_A_Line_in_List_to_A_Label_Volume_Node(self, input_line_list: np.ndarray((100,2,3)), label_volume_node: vtkMRMLLabelMapVolumeNode, discretize_distance = 1):
         """Get a list of lines as np.array and a label volume node"""
@@ -386,12 +405,12 @@ class Needle_Path_PlanningLogic(ScriptedLoadableModuleLogic):
         return result
     def get_Angle_from_A_Line_in_List_to_A_Label_Volume_Node(self, input_line_list: np.ndarray((100,2,3)), label_volume_node: vtkMRMLLabelMapVolumeNode):
         """Get a list of lines as np.array and a label volume node"""
-        """Return a np.array((-1,)) contain the angle of each line to that model
-        One point of the line must be inside the model, one point must be outside
-        Both are inside or both outside, return -1"""
         # Check input types
         if type(input_line_list) != np.ndarray:
             return "get_Angle_from_A_Line_in_List_to_A_Label_Volume_Node failed: Input lines need to be a np.ndarray"
+        """Return a np.array((-1,)) contain the angle of each line to that model
+        One point of the line must be inside the model, one point must be outside
+        Both are inside or both outside, return -1"""
         if type(label_volume_node) != vtkMRMLLabelMapVolumeNode:
             return "get_Angle_from_A_Line_in_List_to_A_Label_Volume_Node failed: Input volume need to be a vtkMRMLLabelMapVolumeNode"
         result = -np.ones((input_line_list.shape[0],)) # Declare result vector
@@ -439,6 +458,9 @@ class Needle_Path_PlanningLogic(ScriptedLoadableModuleLogic):
                            rotation: np.ndarray((3,3)) = np.eye(3),
                            origin: np.ndarray((3,)) = np.array([0,0,0])) -> np.ndarray((3,)):
         """Order for transformation: spacing -> rotate -> translate"""
+        # Check input types
+        if type(input) != np.ndarray:
+            return "convert_IJK_to_RAS failed: Input point need to be a np.ndarray"
         input = np.array(input).reshape(3,)
         spacing = np.array(spacing).reshape(3,)
         rotation = np.array(rotation).reshape(3,3)
@@ -451,6 +473,9 @@ class Needle_Path_PlanningLogic(ScriptedLoadableModuleLogic):
                            origin: np.ndarray((3,)) = np.array([0,0,0])) -> np.ndarray((3,)):
         """Backward transformation of convert_IJK_to_RAS
         The input rotation matrix must not be singular"""
+        # Check input types
+        if type(input) != np.ndarray:
+            return "convert_RAS_to_IJK failed: Input point need to be a np.ndarray"
         input = np.array(input).reshape(3,)
         spacing = np.array(spacing).reshape(3,)
         rotation = np.array(rotation).reshape(3,3)
@@ -462,6 +487,9 @@ class Needle_Path_PlanningLogic(ScriptedLoadableModuleLogic):
             return
     def get_3x3x3_Matrix_From_Bigger_Matrix_at_one_Position(self, x: int, y: int, z: int, array: np.ndarray):
         """Get 3x3x3 matrix from a bigger volume at a specific point"""
+        # Check input types
+        if type(array) != np.ndarray:
+            return "get_3x3x3_Matrix_From_Bigger_Matrix_at_one_Position failed: Input matrix need to be a np.ndarray"
         result = np.zeros((3,3,3))
         x_upper = min(x+2, array.shape[0])
         x_lower = max(x-1, 0)
@@ -482,6 +510,9 @@ class Needle_Path_PlanningLogic(ScriptedLoadableModuleLogic):
         return result
     def get_2x2x2_Matrix_From_Bigger_Matrix_at_one_Position(self, x: int, y: int, z: int, array: np.ndarray):
         """Get 2x2x2 matrix from a bigger volume at a specific point"""
+        # Check input types
+        if type(array) != np.ndarray:
+            return "get_2x2x2_Matrix_From_Bigger_Matrix_at_one_Position failed: Input matrix need to be a np.ndarray"
         result = np.zeros((2,2,2))
         x_lower = math.floor(x)
         x_upper = x_lower+2
@@ -523,7 +554,9 @@ class Needle_Path_PlanningLogic(ScriptedLoadableModuleLogic):
                 vesselsLabelMap: vtkMRMLLabelMapVolumeNode,
                 ventricleLabelMap: vtkMRMLLabelMapVolumeNode,
                 cortexLabelMap: vtkMRMLLabelMapVolumeNode,
-                cortexangleThreshold: float = 55) -> None:
+                cortexangleThreshold: float = 55,
+                needleCutOffLength: float = 60,
+                printResult: bool = True) -> None:
         """
         Run the processing algorithm.
         entryPoints: list of potential entry points,
@@ -541,16 +574,37 @@ class Needle_Path_PlanningLogic(ScriptedLoadableModuleLogic):
         # Turn point to array
         entryPoints = slicer.util.arrayFromMarkupsControlPoints(entryPoints)
         targetPoints = slicer.util.arrayFromMarkupsControlPoints(targetPoints)
+
+        # Early stop if no point are input
+        if len(entryPoints) == 0 or len(targetPoints) == 0 :
+            stopTime = time.time()
+            self.simple_Task_Print_Output(f"Processing completed in {stopTime-startTime:.2f} seconds\nNo path satisfied the conditions!!!", printResult)
+            return False
         # Check if the target get into hypothalamus
         list_of_inside_points = self.check_A_Point_in_List_Is_In_A_Label_Volume_Node(input_point_array=targetPoints,label_volume_node=hypothalamusLabelMap, strictly_inside_mode=False)
         # Filter the remaining target points that is inside
         targetPoints = targetPoints[list_of_inside_points==True]
+        # Early stop if it can't satisfy the conditions
+        if len(targetPoints) == 0:
+            stopTime = time.time()
+            self.simple_Task_Print_Output(f"Processing completed in {stopTime-startTime:.2f} seconds\nNo path satisfied the conditions!!!", printResult)
+            return False
         # Construct a list of line by a combination of start points and end points
         list_of_line = []
         for entryPoint in entryPoints:
             for targetPoint in targetPoints:
                 list_of_line.append([entryPoint,targetPoint])
         list_of_line = np.array(list_of_line)
+
+        # Check if the lines meet the length requirement
+        check_lines_length = self.check_A_Line_in_List_Is_Smaller_Than_A_Cut_Off(list_of_line, needleCutOffLength)
+        list_of_line = list_of_line[check_lines_length]
+        # Early stop if it can't satisfy the conditions
+        if len(list_of_line) == 0:
+            stopTime = time.time()
+            self.simple_Task_Print_Output(f"Processing completed in {stopTime-startTime:.2f} seconds\nNo path satisfied the conditions!!!", printResult)
+            return False
+        
         # Find the angle of lines
         angles_to_cortex = self.get_Angle_from_A_Line_in_List_to_A_Label_Volume_Node(input_line_list=list_of_line, label_volume_node=cortexLabelMap)
         # Filter the lines meeting the angle condition
@@ -559,12 +613,24 @@ class Needle_Path_PlanningLogic(ScriptedLoadableModuleLogic):
         angles_to_cortex = angles_to_cortex[angles_to_cortex<cortexangleThreshold]
         list_of_line = list_of_line[angles_to_cortex>0]
         angles_to_cortex = angles_to_cortex[angles_to_cortex>0]
+        # Early stop if it can't satisfy the conditions
+        if len(list_of_line) == 0:
+            stopTime = time.time()
+            self.simple_Task_Print_Output(f"Processing completed in {stopTime-startTime:.2f} seconds\nNo path satisfied the conditions!!!", printResult)
+            return False
+        
         # Finding the distance to vessels
         distance_to_vessels = self.get_Square_Distance_from_A_Line_in_List_to_A_Label_Volume_Node(input_line_list=list_of_line, label_volume_node=vesselsLabelMap, discretize_distance=1)
         # Filter the remaining lines do not intersect inside
         list_of_line = list_of_line[distance_to_vessels!=0]
         angles_to_cortex = angles_to_cortex[distance_to_vessels!=0]
         distance_to_vessels = distance_to_vessels[distance_to_vessels!=0]
+        # Early stop if it can't satisfy the conditions
+        if len(list_of_line) == 0:
+            stopTime = time.time()
+            self.simple_Task_Print_Output(f"Processing completed in {stopTime-startTime:.2f} seconds\nNo path satisfied the conditions!!!", printResult)
+            return False
+        
         # Finding the distance to ventricle
         distance_to_ventricles = self.get_Square_Distance_from_A_Line_in_List_to_A_Label_Volume_Node(input_line_list=list_of_line, label_volume_node=ventricleLabelMap, discretize_distance=1)
         # Filter the remaining lines do not intersect inside
@@ -572,28 +638,41 @@ class Needle_Path_PlanningLogic(ScriptedLoadableModuleLogic):
         distance_to_vessels = distance_to_vessels[distance_to_ventricles!=0]
         angles_to_cortex = angles_to_cortex[distance_to_ventricles!=0]
         distance_to_ventricles = distance_to_ventricles[distance_to_ventricles!=0]
+        # Early stop if it can't satisfy the conditions
+        if len(list_of_line) == 0:
+            stopTime = time.time()
+            self.simple_Task_Print_Output(f"Processing completed in {stopTime-startTime:.2f} seconds\nNo path satisfied the conditions!!!", printResult)
+            return False
+        
         stopTime = time.time()
-        logging.info(f"Processing completed in {stopTime-startTime:.2f} seconds")
-        print(f"Processing completed in {stopTime-startTime:.2f} seconds")
-
         # Find the best line
         sorted_indices = np.argsort(-distance_to_vessels)
-        # Get 10 best lines
-        number_of_line_to_get = 10
-        print(f"Number of good lines: {list_of_line.shape}")
-        print(f"Best {number_of_line_to_get} lines: \n {list_of_line[sorted_indices[:number_of_line_to_get]]}")
-        print(f"Angles: {angles_to_cortex[sorted_indices[:number_of_line_to_get]]}")
-        print(f"Square distances: {distance_to_vessels[sorted_indices[:number_of_line_to_get]]}")
-        
-        # Visualize the best lines
-        # for i, line in enumerate(list_of_line):
+        # # Get 10 best lines uncomment to print number_of_line_to_get satisfied lines
+        # number_of_line_to_get = 10
+        # print(f"Best {number_of_line_to_get} lines: \n {list_of_line[sorted_indices[:number_of_line_to_get]]}")
+        # print(f"Angles: {angles_to_cortex[sorted_indices[:number_of_line_to_get]]}")
+        # print(f"Square distances: {distance_to_vessels[sorted_indices[:number_of_line_to_get]]}")
+
+        # Get best_line
         best_line = list_of_line[sorted_indices[0]]
         start_point = best_line[0]
         end_point = best_line[1]
-        qualified_line = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsLineNode")
-        qualified_line.SetName(f"Angle {round(angles_to_cortex[sorted_indices[0]])} degree - Distance {round(np.sqrt(distance_to_vessels[sorted_indices[0]]))}mm")            
-        qualified_line.SetLineStartPosition(start_point)
-        qualified_line.SetLineEndPosition(end_point)
+        if printResult:            
+            # Visualize the best lines
+            qualified_line = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsLineNode")
+            qualified_line.SetName(f"Best | Angle: {round(angles_to_cortex[sorted_indices[0]])} | Distance: {round(np.sqrt(distance_to_vessels[sorted_indices[0]]))} | Length: {round(np.linalg.norm(end_point-start_point))}")            
+            qualified_line.SetLineStartPosition(start_point)
+            qualified_line.SetLineEndPosition(end_point)
+            qualified_line.GetDisplayNode().SetPropertiesLabelVisibility(0)
+            # Show info of best line
+            self.simple_Task_Print_Output(f"Processing completed in {stopTime-startTime:.2f} seconds", printResult)
+            self.simple_Task_Print_Output(f"Number of qualified lines: {list_of_line.shape[0]}", printResult)
+            self.simple_Task_Print_Output(f"Coordinate of best entry point: {start_point}", printResult)
+            self.simple_Task_Print_Output(f"Coordinate of best target point: {end_point}", printResult)
+            self.simple_Task_Print_Output(f"Characteristics of best line:", printResult)
+            self.simple_Task_Print_Output(f"Angle to Cortex: {round(angles_to_cortex[sorted_indices[0]])} degree", printResult)
+            self.simple_Task_Print_Output(f"Distance to Vessel: {round(np.sqrt(distance_to_vessels[sorted_indices[0]]))} mm", printResult)
+            self.simple_Task_Print_Output(f"Length of path: {round(np.linalg.norm(end_point-start_point))} mm", printResult)
 
         # Store data so they could be prepare to send to ROS later
         self.start_point_for_ROS = start_point
@@ -602,6 +681,7 @@ class Needle_Path_PlanningLogic(ScriptedLoadableModuleLogic):
         self.vesselsLabelMapfor_ROS = vesselsLabelMap
         self.ventricleLabelMapfor_ROS = ventricleLabelMap
         self.cortexLabelMapfor_ROS = cortexLabelMap
+        return True
 
     def create_Folder_With_Entry_and_Target_Points_and_Polydata(self) -> None:
         """
@@ -653,6 +733,11 @@ class Needle_Path_PlanningLogic(ScriptedLoadableModuleLogic):
         volPlugin = pluginHandler.getOwnerPluginForSubjectHierarchyItem(folder_ID)
         volPlugin.setDisplayVisibility(folder_ID, 0)
         return folder_ID
+    def simple_Task_Print_Output(self, text, printResult: bool = True):
+        """Logging and Printing something to the console"""
+        if printResult:
+            logging.info(text)
+            print(text)
 
 # Needle_Path_PlanningTest
 class Needle_Path_PlanningTest(ScriptedLoadableModuleTest):
@@ -690,7 +775,6 @@ class Needle_Path_PlanningTest(ScriptedLoadableModuleTest):
         """Run as few or as many tests as needed here."""
         self.setUp()
         self.load_Data()
-        self.test_summarize_Data_and_Create_Model()
         # Creating common test objects
         self.test_standard_volume, self.test_standard_label_volume, self.test_standard_segmentation, self.test_standard_model = self.object_Creation_For_Testing_Creating_Box_All(nodeNameEnd = "Standard",
                                                             imageSize = [16, 64, 32],
@@ -704,17 +788,22 @@ class Needle_Path_PlanningTest(ScriptedLoadableModuleTest):
         # self.object_Creation_For_Testing_Creating_Box_Segmentation("Segmentation")
         # self.object_Creation_For_Testing_Creating_Box_Model("Model")
 
-
-        self.test_check_A_Point_in_List_Is_In_A_Label_Volume_Node()
-        self.test_get_Distance_from_A_Line_in_List_to_A_Label_Volume_Node()
-
+        # Run different tests
         self.unit_test_convert_IJK_to_RAS()
         self.unit_test_convert_RAS_tos_IJK()
         self.unit_test_get_3x3x3_Matrix_From_Bigger_Matrix_at_one_Position()
         self.unit_test_get_2x2x2_Matrix_From_Bigger_Matrix_at_one_Position()
         self.unit_test_convert_Label_Volume_To_Model()
+
+        self.test_summarize_Data_and_Create_Model()
+        self.test_check_A_Point_in_List_Is_In_A_Label_Volume_Node()
+        self.test_check_A_Line_in_List_Is_Smaller_Than_A_Cut_Off()
+        self.test_get_Distance_from_A_Line_in_List_to_A_Label_Volume_Node()
         self.test_get_Angle_from_A_Line_in_List_to_A_Label_Volume_Node()
 
+        self.test_Integrated_Code()
+
+        # Remove test object
         self.shNode.RemoveItem(self.volumefortestfolderID)
         self.shNode.RemoveItem(self.labelvolumefortestfolderID)
         self.shNode.RemoveItem(self.segmentationfortestfolderID)
@@ -743,15 +832,16 @@ class Needle_Path_PlanningTest(ScriptedLoadableModuleTest):
     def test_summarize_Data_and_Create_Model(self):
         """Test summarize_Data_and_Create_Model function"""
         successful_tested = 1
-        n_Entry, n_Target, exportModelFolderItemId, exportSegmentFolderItemId = self.logic.summarize_Data_and_Create_Model(self.start_points, self.end_points)
+        # n_Entry, n_Target, exportModelFolderItemId, exportSegmentFolderItemId = self.logic.summarize_Data_and_Create_Model(self.start_points, self.end_points)
+        n_Entry, n_Target= self.logic.summarize_Data_and_Create_Model(self.start_points, self.end_points, False)
         successful_tested = not(n_Entry != 48 or n_Target != 21)
-        self.shNode.RemoveItem(exportModelFolderItemId, True, True)
-        self.shNode.RemoveItem(exportSegmentFolderItemId, True, True)
-        self.simple_Task_Logging_Test_Outcome("Model Creation", successful_tested)
+        # self.shNode.RemoveItem(exportModelFolderItemId, True, True)
+        # self.shNode.RemoveItem(exportSegmentFolderItemId, True, True)
+        self.simple_Task_Logging_Test_Outcome("Summarize number of entry points and target points", successful_tested)
     def test_check_A_Point_in_List_Is_In_A_Label_Volume_Node(self):
         """Test check_A_Point_in_List_Is_In_A_Label_Volume_Node function"""
         successful_tested = 1
-        ### Example 1
+        ### Example 1 - Positive, negative, and border case
         # Create a label volume node and point
         label_volume_node = self.test_standard_label_volume
         input_point = np.array([[1,1,0], [0,16.5,16.5], [10,0,16], [0,25,10]])
@@ -760,7 +850,7 @@ class Needle_Path_PlanningTest(ScriptedLoadableModuleTest):
         # Check
         if np.linalg.norm(result - expected_result) > 0.001:
             successful_tested = 0        
-        ### Example 2 - test the borderline point
+        ### Example 2 - test the borderline point when strictly_inside_mode=True
         # Create a label volume node and point
         label_volume_node = self.test_standard_label_volume
         input_point = np.array([[1,1,0], [0,16.5,16.5], [10,0,16]])
@@ -769,7 +859,7 @@ class Needle_Path_PlanningTest(ScriptedLoadableModuleTest):
         # Check
         if np.linalg.norm(result - expected_result) > 0.001:
             successful_tested = 0        
-        ### Example 3
+        ### Example 3 - Null case
         # Create a label volume node and point
         label_volume_node = self.test_standard_label_volume
         input_point = None
@@ -778,7 +868,7 @@ class Needle_Path_PlanningTest(ScriptedLoadableModuleTest):
         # Check
         if expected_result != result:
             successful_tested = 0
-        ### Example 4
+        ### Example 4 - Null case
         # Create a label volume node and point
         label_volume_node = None
         input_point = np.array([0,0,0])
@@ -790,10 +880,36 @@ class Needle_Path_PlanningTest(ScriptedLoadableModuleTest):
         
         # Log the result
         self.simple_Task_Logging_Test_Outcome("Check a Point in List is in a Label Volume Node", successful_tested)
+    def test_check_A_Line_in_List_Is_Smaller_Than_A_Cut_Off(self):
+        """Test check_A_Line_in_List_Is_Smaller_Than_A_Cut_Off function"""
+        successful_tested = 1
+        ### Example 1 - Null case
+        # Create a line list and cut off
+        input_line_list = None
+        cut_off = 60
+        expected_result = "check_A_Line_in_List_Is_Smaller_Than_A_Cut_Off failed: Input lines need to be a np.ndarray"
+        result = self.logic.check_A_Line_in_List_Is_Smaller_Than_A_Cut_Off(input_line_list, cut_off)
+        # Check
+        if expected_result != result:
+            successful_tested = 0
+        ### Example 2 - Positive, negative, and border case
+        # Create a line list and cut off
+        input_line_list = np.array([[[0,0,0], [0,0,60]],
+                                    [[0,60,0], [0,0,0]],
+                                    [[61,0,0], [0,0,0]],
+                                    [[0,0,0], [34,34,34]],
+                                    [[0,0,0], [35,35,35]]])
+        cut_off = 60
+        expected_result = np.array([True, True, False, True, False])
+        result = self.logic.check_A_Line_in_List_Is_Smaller_Than_A_Cut_Off(input_line_list, cut_off)
+        # Check
+        if np.any((result == expected_result) == False):
+            successful_tested = 0        
+        self.simple_Task_Logging_Test_Outcome("Check A Line in List Is Smaller Than A Cut Off", successful_tested)
     def test_get_Distance_from_A_Line_in_List_to_A_Label_Volume_Node(self):
         """Test get_Distance_from_A_Line_in_List_to_A_Label_Volume_Node function"""
         successful_tested = 1
-        ### Example 1
+        ### Example 1 - Null case
         # Create a label volume node and point
         label_volume_node = self.test_standard_label_volume
         input_line_list = None
@@ -802,7 +918,7 @@ class Needle_Path_PlanningTest(ScriptedLoadableModuleTest):
         # Check
         if expected_result != result:
             successful_tested = 0
-        ### Example 2
+        ### Example 2 - Null case
         # Create a label volume node and point
         label_volume_node = None
         input_line_list = np.array([0,0,0])
@@ -870,6 +986,116 @@ class Needle_Path_PlanningTest(ScriptedLoadableModuleTest):
             successful_tested = 0        
         self.simple_Task_Logging_Test_Outcome("Get Angle from a Line in List to a Label Volume Node", successful_tested)
 
+    def test_Integrated_Code(self):
+        """Test integrated code with test dataset. The label node are mixed together"""
+        successful_tested = 1
+        ### Example 1
+        # Propper input
+        expected_result = True
+        result = self.logic.process(entryPoints = self.start_points,
+                                    targetPoints = self.end_points,
+                                    hypothalamusLabelMap = self.hypothalamus_label_map,
+                                    vesselsLabelMap = self.vessel_label_map,
+                                    ventricleLabelMap = self.ventricle_label_map,
+                                    cortexLabelMap = self.cortex_label_map,
+                                    cortexangleThreshold = 55,
+                                    needleCutOffLength = 60,
+                                    printResult = False)
+        # Check
+        if expected_result != result:
+            successful_tested = 0
+        ### Example 2
+        # Change entry and target point
+        expected_result = False
+        result = self.logic.process(entryPoints = self.end_points, ####
+                                    targetPoints = self.start_points, ####
+                                    hypothalamusLabelMap = self.hypothalamus_label_map,
+                                    vesselsLabelMap = self.vessel_label_map,
+                                    ventricleLabelMap = self.ventricle_label_map,
+                                    cortexLabelMap = self.cortex_label_map,
+                                    cortexangleThreshold = 55,
+                                    needleCutOffLength = 60,
+                                    printResult = False)
+        # Check
+        if expected_result != result:
+            successful_tested = 0
+        ### Example 3
+        # Put cortext into vessel 
+        expected_result = False
+        result = self.logic.process(entryPoints = self.start_points,
+                                    targetPoints = self.end_points,
+                                    hypothalamusLabelMap = self.hypothalamus_label_map,
+                                    vesselsLabelMap = self.cortex_label_map, ####
+                                    ventricleLabelMap = self.ventricle_label_map, 
+                                    cortexLabelMap = self.cortex_label_map,
+                                    cortexangleThreshold = 55,
+                                    needleCutOffLength = 60,
+                                    printResult = False)
+        # Check
+        if expected_result != result:
+            successful_tested = 0
+        ### Example 4
+        # Put cortext into ventricle
+        expected_result = False
+        result = self.logic.process(entryPoints = self.start_points,
+                                    targetPoints = self.end_points,
+                                    hypothalamusLabelMap = self.hypothalamus_label_map,
+                                    vesselsLabelMap = self.vessel_label_map,
+                                    ventricleLabelMap = self.cortex_label_map, ####
+                                    cortexLabelMap = self.cortex_label_map,
+                                    cortexangleThreshold = 55,
+                                    needleCutOffLength = 60,
+                                    printResult = False)
+        # Check
+        if expected_result != result:
+            successful_tested = 0
+        ### Example 5
+        # Reduce threshhold for angle
+        expected_result = False
+        result = self.logic.process(entryPoints = self.start_points,
+                                    targetPoints = self.end_points,
+                                    hypothalamusLabelMap = self.hypothalamus_label_map,
+                                    vesselsLabelMap = self.vessel_label_map,
+                                    ventricleLabelMap = self.ventricle_label_map,
+                                    cortexLabelMap = self.cortex_label_map,
+                                    cortexangleThreshold = 5, ####
+                                    needleCutOffLength = 60,
+                                    printResult = False)
+        # Check
+        if expected_result != result:
+            successful_tested = 0
+        ### Example 6
+        # Reduce threshhold for path length
+        expected_result = False
+        result = self.logic.process(entryPoints = self.start_points,
+                                    targetPoints = self.end_points,
+                                    hypothalamusLabelMap = self.hypothalamus_label_map,
+                                    vesselsLabelMap = self.vessel_label_map,
+                                    ventricleLabelMap = self.ventricle_label_map,
+                                    cortexLabelMap = self.cortex_label_map,
+                                    cortexangleThreshold = 55, ####
+                                    needleCutOffLength = 40,
+                                    printResult = False)
+        # Check
+        if expected_result != result:
+            successful_tested = 0
+        ### Example 7
+        # Put hyppothalamus into vessel
+        expected_result = False
+        result = self.logic.process(entryPoints = self.start_points,
+                                    targetPoints = self.end_points,
+                                    hypothalamusLabelMap = self.hypothalamus_label_map,
+                                    vesselsLabelMap = self.hypothalamus_label_map, ####
+                                    ventricleLabelMap = self.ventricle_label_map,
+                                    cortexLabelMap = self.cortex_label_map,
+                                    cortexangleThreshold = 55,
+                                    needleCutOffLength = 60,
+                                    printResult = False)
+        # Check
+        if expected_result != result:
+            successful_tested = 0
+        self.simple_Task_Logging_Test_Outcome("All system test - No unwanted behaviors", successful_tested)
+
     def unit_test_convert_IJK_to_RAS(self):
         """Test convert_IJK_to_RAS function"""
         successful_tested = 1
@@ -890,6 +1116,15 @@ class Needle_Path_PlanningTest(ScriptedLoadableModuleTest):
                                                       rotation = np.array([[0,-1,0],[1,0,0],[0,0,1]]),
                                                       origin = np.array([0,5,0]))
         if np.linalg.norm(result_vector-expected_result_vector) > 0.001:
+            successful_tested = 0
+        # Example 3
+        original_vector = None
+        expected_result_vector = "convert_IJK_to_RAS failed: Input point need to be a np.ndarray"
+        result_vector = self.logic.convert_IJK_to_RAS(input = original_vector,
+                                                      spacing = np.array([5,5,5]),
+                                                      rotation = np.array([[0,-1,0],[1,0,0],[0,0,1]]),
+                                                      origin = np.array([0,5,0]))
+        if result_vector != expected_result_vector:
             successful_tested = 0
         self.simple_Task_Logging_Unit_Test_Outcome("Convert IJK to RAS", successful_tested)
     def unit_test_convert_RAS_tos_IJK(self):
@@ -913,11 +1148,20 @@ class Needle_Path_PlanningTest(ScriptedLoadableModuleTest):
                                                       origin = np.array([0,5,0]))
         if np.linalg.norm(result_vector-expected_result_vector) > 0.001:
             successful_tested = 0
+        # Example 3
+        original_vector = None
+        expected_result_vector = "convert_RAS_to_IJK failed: Input point need to be a np.ndarray"
+        result_vector = self.logic.convert_RAS_to_IJK(input = original_vector,
+                                                      spacing = np.array([5,5,5]),
+                                                      rotation = np.array([[0,-1,0],[1,0,0],[0,0,1]]),
+                                                      origin = np.array([0,5,0]))
+        if result_vector != expected_result_vector:
+            successful_tested = 0
         self.simple_Task_Logging_Unit_Test_Outcome("Convert RAS to IJK", successful_tested)
     def unit_test_get_3x3x3_Matrix_From_Bigger_Matrix_at_one_Position(self):
         """Test get_3x3x3_Matrix_From_Bigger_Matrix_at_one_Position function"""
         successful_tested = 1
-        # Example 1
+        # Example 1 - Border case
         input_x = 0
         input_y = 0
         input_z = 0
@@ -934,7 +1178,7 @@ class Needle_Path_PlanningTest(ScriptedLoadableModuleTest):
                                      [ 0, 12, 13]]])
         if np.linalg.norm(result-expected_result) > 0.001:
             successful_tested = 0
-        # Example 2
+        # Example 2 - Outside case
         input_x = 6
         input_y = 6
         input_z = 6
@@ -942,11 +1186,20 @@ class Needle_Path_PlanningTest(ScriptedLoadableModuleTest):
         expected_result = np.zeros((3,3,3))
         if np.linalg.norm(result-expected_result) > 0.001:
             successful_tested = 0
+        # Example 3 - Null case
+        input_x = 6
+        input_y = 6
+        input_z = 6
+        input_array = None
+        result = self.logic.get_3x3x3_Matrix_From_Bigger_Matrix_at_one_Position(input_x, input_y, input_z, input_array)
+        expected_result = "get_3x3x3_Matrix_From_Bigger_Matrix_at_one_Position failed: Input matrix need to be a np.ndarray"
+        if result != expected_result:
+            successful_tested = 0
         self.simple_Task_Logging_Unit_Test_Outcome("Get 3x3x3 Matrix at one Position from a bigger Matrix ", successful_tested)
     def unit_test_get_2x2x2_Matrix_From_Bigger_Matrix_at_one_Position(self):
         """Test get_2x2x2_Matrix_From_Bigger_Matrix_at_one_Position function"""
-        successful_tested = 1
-        # Example 1
+        successful_tested = 1 
+        # Example 1 - Border case
         input_x = 0.5
         input_y = 0.5
         input_z = 0.5
@@ -958,13 +1211,22 @@ class Needle_Path_PlanningTest(ScriptedLoadableModuleTest):
                                      [ 12, 13]]])
         if np.linalg.norm(result-expected_result) > 0.001:
             successful_tested = 0
-        # Example 2
+        # Example 2 - Outside case
         input_x = 6
         input_y = 6
         input_z = 6
         result = self.logic.get_2x2x2_Matrix_From_Bigger_Matrix_at_one_Position(input_x, input_y, input_z, input_array)
         expected_result = np.zeros((2,2,2))
         if np.linalg.norm(result-expected_result) > 0.001:
+            successful_tested = 0
+        # Example 3 - Null case
+        input_x = 6
+        input_y = 6
+        input_z = 6
+        input_array = None
+        result = self.logic.get_2x2x2_Matrix_From_Bigger_Matrix_at_one_Position(input_x, input_y, input_z, input_array)
+        expected_result = "get_2x2x2_Matrix_From_Bigger_Matrix_at_one_Position failed: Input matrix need to be a np.ndarray"
+        if result != expected_result:
             successful_tested = 0
         self.simple_Task_Logging_Unit_Test_Outcome("Get 2x2x2 Matrix at one Position from a bigger Matrix ", successful_tested)
     def unit_test_convert_Label_Volume_To_Model(self):
