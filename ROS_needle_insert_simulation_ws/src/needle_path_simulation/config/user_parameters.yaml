@@ -1,4 +1,5 @@
-# Moveit configuration
+# Moveit configuration. The developer did not expect user to change these value into uncanny cases
+# (like 0 or negative values) therefore, the program might not be able to work if you decide to do so
 planning_time_limit: 10.0 # Increase time limit for path planning
 jump_threshold: 5.0 # Set this to 0 if continuously fail to plan the path, WARNING: Setting to zero risk jumping of robot joints
 task_space_discretize_distance: 0.001 # The distance between consecutive waypoints along the Cartesian path when inserting the needle = 0.001 m
@@ -11,7 +12,7 @@ remove_needle_duration: 3.0 # Time to move from target pose to initial pose (rem
 # GUI text position
 GUI_text_height: 1.0 # Set the height of GUI text in RVIZ
 
-# Network configuration
+# Network configuration: Change it if you different nerwork setup
 RIB_server_ip: "10.0.2.2"
 RIB_port: 18944
 RIB_type: "client"
