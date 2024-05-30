@@ -1,8 +1,0 @@
-prefix=/home/rosbox/needle_insert_simulation_ws/devel
-
-Name: needle_path_simulation
-Description: Description of needle_path_simulation
-Version: 0.0.0
-Cflags: 
-Libs: -L${prefix}/lib 
-Requires: 
