@@ -98,8 +98,7 @@ In ROS:
 
 ## Fails to compute the plan everytime
 - The brain and the needle path might be at an angle that causes the robot to colide itself. You can:
-  + Try to rotate ± translate the brain model (`vtkMRMLModelNode`) and needle path (`vtkMRMLMarkupsFiducialNode`) using [Transforms module](https://slicer.readthedocs.io/en/latest/user_guide/modules/transforms.html) to a different pose that enable the robot to move.
-  + ![image](https://github.com/dthung99/Image_guided_Navigation_for_Robotics_MSc_Project/assets/155381330/e3966376-5349-4c84-a6e3-8a6f135abdb0)
+  + Try to rotate ± translate the brain model (`vtkMRMLModelNode`) and needle path (`vtkMRMLMarkupsFiducialNode`) using [Transforms module](https://slicer.readthedocs.io/en/latest/user_guide/modules/transforms.html) to a different pose that enable the robot to move. ![image](https://github.com/dthung99/Image_guided_Navigation_for_Robotics_MSc_Project/assets/155381330/e3966376-5349-4c84-a6e3-8a6f135abdb0)
   + Change the origins of the robot: you can move the robot around the world coordinate by changing the URDF file in `<your_workspace>/src/needle_path_simulation/urdf/standard_test_Robot.urdf`. The metrics that is advised to move is the origin xyz of `<joint name="base_to_part_1" type="revolute"> ... </joint>`.
   + Try to set `jump_threshold: 5.0` into `jump_threshold: 0.0`, or increase the time allowed for planning `planning_time_limit` in `<your_workspace>/src/needle_path_simulation/config/user_parameters.yaml`.
 
