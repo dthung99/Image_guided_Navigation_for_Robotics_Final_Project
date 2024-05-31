@@ -38,8 +38,8 @@ You now can use the extension as other extension in 3D slicer !!!
 
 The extension take `vtkMRMLMarkupsFiducialNode` and `vtkMRMLLabelVolumeNode` as input and plan a path to the brain. Make sure to use correct data type!
 
-Run and wait !!!. I did test on a very big dataset and it will take about 8-20s depending on your requirements
-Then `select Prepare data to send to ROS` to prepare data for sending to ROS !!!
+Run and wait !!! I did test on a very big dataset and it will take about 8-20s depending on your requirements
+Then select `Prepare data to send to ROS` to prepare data for sending to ROS !!!
 
 ## ROS
 Download this repository and unzip it on your Virtual Machine. Or
