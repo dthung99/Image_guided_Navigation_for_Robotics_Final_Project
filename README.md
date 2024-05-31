@@ -29,13 +29,13 @@ Choose Extension wizard module, select `Developer Tools` -> `Extension Wizard`.
 In `Extension Wizard`, select `Select Extension`, go to \<your_download_folder\>/Needle_Path_planning. And click `Select Folder`. A window will pop up to ask you to load the extension. Click `Yes`
 ![image](https://github.com/dthung99/Image_guided_Navigation_for_Robotics_MSc_Project/assets/155381330/0e099e5c-dbdf-4611-9459-1f758e4713c1)
 
-You now can use the extension as other extension in 3D slicer!!!
+You now can use the extension as other extension in 3D slicer !!!
 ![image](https://github.com/dthung99/Image_guided_Navigation_for_Robotics_MSc_Project/assets/155381330/52600035-8068-47ed-9cb9-7868822996f4)
 
 The extension take `vtkMRMLMarkupsFiducialNode` and `vtkMRMLLabelVolumeNode` as input and plan a path to the brain. Make sure to use correct data type!
 
 Run and wait !!!. I did test on a very big dataset and it will take about 8-20s depending on your requirements
-Then `select Prepare data to send to ROS` to prepare data for sending to ROS!!!
+Then `select Prepare data to send to ROS` to prepare data for sending to ROS !!!
 
 ## ROS
 Download this repository and unzip it on your Virtual Machine. Or
@@ -44,23 +44,43 @@ Download this repository and unzip it on your Virtual Machine. Or
 
 Copy two package `moveit_needle_sim` and `needle_path_simulation` from \<your_download_folder\>/ROS_needle_insert_simulation_ws/src into \<your_workspace\>/src folder in your workspace. It is expected that you have already install [ROS-IGTL-Bridge](#prerequisites) in this workspace.
 
-Go to your workspace `cd <your_workspace>`
+Go to your workspace
 
-Compile the code `catkin_make`
+	cd <your_workspace>
+
+Compile the code
+
+	catkin_make
 
 Source your workspace in every new terminal you open
 
 	source <Your workspace>/devel/setup.bash
 OR
-echo "source ~/<Your workspace>/devel/setup.bash" >> ~/.bashrc
 
+ 	echo "source ~/<Your workspace>/devel/setup.bash" >> ~/.bashrc
 
+## Streamming from 3D slicer to ROS and run simulation !!!
+In 3D slicer, after you click `Prepare data to send to ROS`:
+- Open `OpenIGTLinkIF` extension.
+- In `Connectors`, click `+`. Then select `Server` and `Active` in `Properties` section.
+- Default `Hostname` and `Port` should be used, which are expected to be `localhost` and `18944`.
+- Expand the `I/O Configuration`, add the `vtkMRMLMarkupsFiducialNode` and `vtkMRMLModelNode` that you want to send
+- IMPORTANT: you can only send `vtkMRMLMarkupsFiducialNode` whose control points' names are "entry_point" and "target_point". These are created for you in `ROS_entry_and_target_points`
+![image](https://github.com/dthung99/Image_guided_Navigation_for_Robotics_MSc_Project/assets/155381330/790a0858-afcd-4c97-85dd-e7a409373b6f)
+
+In ROS:
+- Open _**Two Terminals**_. Remember to source your workspace.
+- In one terminal, visualize the robot model:
+
+	  roslaunch moveit_needle_sim demo.launch
+- In the other terminal, run the communication and control nodes (Only run this node _**AFTER**_ turning the 3D `OpenIGTLinkIF` server _**ON**_:
+
+	  roslaunch needle_path_simulation needle_insertion.launch
+- Follow the instruction of ROS. 
 RUNNNNN
-!!! REMEMBER TO TURN 3D SLICER SERVER ON BEFORE RUNNING !!!
-roslaunch moveit_needle_sim demo.launch
+ !!! REMEMBER TO TURN 3D SLICER SERVER ON BEFORE RUNNING !!!
 
 Open a new terminal (Remember to source)
-roslaunch needle_path_simulation needle_insertion.launch
 
 FOLLOWING THE INSTRUCTION
 REMEMBER TO TURN RvizVisualToolsGui ON. If you don't see it, select Panels -> RvizVisualToolsGui
@@ -96,7 +116,7 @@ roslaunch needle_path_simulation needle_insertion.launch
 DEBUGGING
 // If catkin_make fail, run
 rospack list 
-// To see if you have ros_igtl_bridge, moveit_visual_tools, moveit_ros_core, moveit_msgs, and other moveit package install!!! To install them:
+// To see if you have ros_igtl_bridge, moveit_visual_tools, moveit_ros_core, moveit_msgs, and other moveit package install !!! To install them:
 sudo apt-get update
 sudo apt install ros-noetic-moveit
 sudo apt-get install ros-noetic-moveit-visual-tools
