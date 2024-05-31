@@ -1,5 +1,4 @@
-# Moveit configuration. The developer did not expect user to change these value into uncanny cases
-# (like 0 or negative values) therefore, the program might not be able to work if you decide to do so
+# Moveit configuration
 planning_time_limit: 10.0 # Increase time limit for path planning
 jump_threshold: 5.0 # Set this to 0 if continuously fail to plan the path, WARNING: Setting to zero risk jumping of robot joints
 task_space_discretize_distance: 0.001 # The distance between consecutive waypoints along the Cartesian path when inserting the needle = 0.001 m
@@ -12,7 +11,7 @@ remove_needle_duration: 3.0 # Time to move from target pose to initial pose (rem
 # GUI text position
 GUI_text_height: 1.0 # Set the height of GUI text in RVIZ
 
-# Network configuration: Change it if you different nerwork setup
+# Network configuration
 RIB_server_ip: "10.0.2.2"
 RIB_port: 18944
 RIB_type: "client"
@@ -30,7 +29,7 @@ brain_mesh/color/b: 0.0
 # Robot setup: the direct of the needle in the end effector frame
 # Name of planning group and baselink of your customize robot
 planning_group: "robot_arm" # Name of the planning group that is set in ROS
-BASE_LINK: "base_link" # Name of the link that is attached to world frame
+base_link: "base_link" # Name of the link that is attached to world frame
 # Change this if you want to use another robot, it should be a unit vector
 needle_orientation_in_end_effector_frame/x: 0.0
 needle_orientation_in_end_effector_frame/y: 0.0
