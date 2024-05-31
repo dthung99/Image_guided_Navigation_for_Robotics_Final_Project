@@ -1,22 +1,33 @@
-# Image_guided_Navigation_for_Robotics_Final_Project
-This git repository is my submission for Image-guided Navigation for Robotics Module at King's College London.
+# Image_guided_Navigation_for_Robotics_Project
+This git repository is my submission for Image-guided Navigation for Robotics Module at King's College London. A video for demonstration of how to use it is available [here](https://emckclac-my.sharepoint.com/:v:/g/personal/k23133931_kcl_ac_uk/EZk3IHEwcylDiV8dwL06d54B1hmGNu8GzWmnpYw1AYWLkQ?e=YqZXIY&nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJTdHJlYW1XZWJBcHAiLCJyZWZlcnJhbFZpZXciOiJTaGFyZURpYWxvZy1MaW5rIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXcifSwicGxheWJhY2tPcHRpb25zIjp7fX0%3D)
 
-
+## Introduction
 The project aim to create an extension in 3D slicer for planning a straight path for a needle to go into the brain and then send the information for simulation in ROS.
 
+## Prerequisites
+Before using the program, you will need to install **_3D slicer_** on your **_window computer_**, and **_ROS 1_** with **_noetic distribution_** on a **_virtual machine_** on the **_same computer_**.
+- [3D slicer installation](https://download.slicer.org/)
+- [Virtual machine installation](https://www.virtualbox.org/wiki/Downloads)
+- [ROS Noetic Ninjemys installation](https://wiki.ros.org/ROS/Installation)
 
+Note: The system might still work if you decided to install 3D slicer and ROS in a different way. However, the network setup between them might be different and you might need to edit the **user_parameters.yaml** file.
 
-How to install:
-Before using the program, you will need to install 3D slicer on your Window computer, and ROS 1 with noetic distribution on a virtual machine on the same computer
-The system might still work if you decided to install 3D slicer and ros-noetic distro in a different way. However, the network setup between them will be different and not covered here.
+Additionally, you will need to install **OpenIGTLinkIF** extension on **3D slicer** and **ROS-IGTL-Bridge** package on your **ROS workspace**.
+- [Extension installation on 3D slicer](https://slicer.readthedocs.io/en/latest/user_guide/extensions_manager.html)
+- [ROS-IGTL-Bridge package installation on ROS](https://github.com/openigtlink/ROS-IGTL-Bridge)
 
-After you install 3D slicer, you need to install IGT
-After that, download this repository, and unzip it,
+## How to install the repository 
+First, download this repository and unzip it in both your computer and virtual machine. Or
+
+	git clone https://github.com/dthung99/Image_guided_Navigation_for_Robotics_MSc_Project.git
+ 
+Open 3D slicer, choose ![image](https://github.com/dthung99/Image_guided_Navigation_for_Robotics_MSc_Project/assets/155381330/5e32e4d0-ce47-4850-9c18-d4ab0178fc0f)
+
 
 Choose Extension wizard module, select extension.
-Choose <Your download folder>/Needle_Path_planning
+Choose <Yourdownloadfolder>/Needle_Path_planning
 
-And load the modules.
+And load the modules. 
 
 Open the modules, and upload your data.
 
