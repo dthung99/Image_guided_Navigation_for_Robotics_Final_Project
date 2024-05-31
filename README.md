@@ -25,12 +25,15 @@ Download this repository and unzip it on your Window. Or
 
 Open 3D slicer, choose 
 Choose Extension wizard module, select `Developer Tools` -> `Extension Wizard`.
+
 ![image](https://github.com/dthung99/Image_guided_Navigation_for_Robotics_MSc_Project/assets/155381330/3bdb9e5d-bc9c-4927-b3fd-ae484df0ef61)
 
 In `Extension Wizard`, select `Select Extension`, go to `<your_download_folder>/Needle_Path_planning`. And click `Select Folder`. A window will pop up to ask you to load the extension. Click `Yes`
+
 ![image](https://github.com/dthung99/Image_guided_Navigation_for_Robotics_MSc_Project/assets/155381330/0e099e5c-dbdf-4611-9459-1f758e4713c1)
 
 You now can use the extension as other extension in 3D slicer !!!
+
 ![image](https://github.com/dthung99/Image_guided_Navigation_for_Robotics_MSc_Project/assets/155381330/52600035-8068-47ed-9cb9-7868822996f4)
 
 The extension take `vtkMRMLMarkupsFiducialNode` and `vtkMRMLLabelVolumeNode` as input and plan a path to the brain. Make sure to use correct data type!
@@ -67,6 +70,7 @@ In 3D slicer, after you click `Prepare data to send to ROS`:
 - Default `Hostname` and `Port` should be used, which are expected to be `localhost` and `18944`.
 - Expand the `I/O Configuration`, add the `vtkMRMLMarkupsFiducialNode` and `vtkMRMLModelNode` that you want to send
 - IMPORTANT: you can only send `vtkMRMLMarkupsFiducialNode` whose control points' names are "entry_point" and "target_point". These are created for you in `ROS_entry_and_target_points`
+
 ![image](https://github.com/dthung99/Image_guided_Navigation_for_Robotics_MSc_Project/assets/155381330/790a0858-afcd-4c97-85dd-e7a409373b6f)
 
 In ROS:
@@ -78,6 +82,7 @@ In ROS:
 
 	  roslaunch needle_path_simulation needle_insertion.launch
 - Follow the instruction of ROS. `RvizVisualToolsGui` is an essential component to interact with the code. If you don't see it, select `Panels` -> `RvizVisualToolsGui`
+
 ![image](https://github.com/dthung99/Image_guided_Navigation_for_Robotics_MSc_Project/assets/155381330/2629aeb2-fa2b-4a1a-bc02-0e09d2cd350f)
 
 # Debugging
@@ -94,6 +99,7 @@ In ROS:
 ## Fails to compute the plan everytime
 - The brain and the needle path might be at an angle that causes the robot to colide itself. You can:
   + Try to rotate ± translate the brain model (`vtkMRMLModelNode`) and needle path (`vtkMRMLMarkupsFiducialNode`) using [Transforms module](https://slicer.readthedocs.io/en/latest/user_guide/modules/transforms.html) to a different pose that enable the robot to move.
+
 ![image](https://github.com/dthung99/Image_guided_Navigation_for_Robotics_MSc_Project/assets/155381330/e3966376-5349-4c84-a6e3-8a6f135abdb0)
 
   + Change the origins of the robot: you can move the robot around the world coordinate by changing the URDF file in `<your_workspace>/src/needle_path_simulation/urdf/standard_test_Robot.urdf`. The metrics that is advised to move is the origin xyz of `<joint name="base_to_part_1" type="revolute"> ... </joint>`.
