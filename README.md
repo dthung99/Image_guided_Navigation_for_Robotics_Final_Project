@@ -110,13 +110,13 @@ In ROS:
 - Waiting might be an option! Sometime you might send a very heavy mesh to ROS (if your input label map is very big). Or you might set the velocity of the robot too low (by changing the user_parameters.yaml)
 
 # Personalisation 
-- You can change a few paramerter in
+- You can change a few paramerter in:
 
 	  <Your workspace>/src/needle_path_simulation/config/user_parameters.yaml
-- If you want to use your own robot
+- If you want to use your own robot:
   + First configurate it using `MoveIt`. `MoveIt Setup Assistant` offers a user friendly way for setting up your own robot ([MoveIt Setup Assistant](https://docs.ros.org/en/kinetic/api/moveit_tutorials/html/doc/setup_assistant/setup_assistant_tutorial.html)).
     
-  + Change the parameters in `user_parameters.yaml` to fit your new robot, especially the `planning_group`, `base_link`, and `needle_orientation_in_end_effector_frame`
+  + Change the parameters in `user_parameters.yaml` to fit your new robot, especially the `planning_group`, `base_link`, and `needle_orientation_in_end_effector_frame`.
     
   + Controlling your robot with:
 
@@ -138,7 +138,9 @@ When you prepare to move the robot in each stage, there will be a purple phantom
 
 
 Best wishes
+
 Hung
+
 Dang The Hung
 
 
