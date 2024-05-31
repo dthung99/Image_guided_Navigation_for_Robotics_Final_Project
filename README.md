@@ -26,7 +26,7 @@ Open 3D slicer, choose
 Choose Extension wizard module, select `Developer Tools` -> `Extension Wizard`.
 ![image](https://github.com/dthung99/Image_guided_Navigation_for_Robotics_MSc_Project/assets/155381330/3bdb9e5d-bc9c-4927-b3fd-ae484df0ef61)
 
-In `Extension Wizard`, select `Select Extension`, go to \<Your_download_folder\>/Needle_Path_planning. And click `Select Folder`. A window will pop up to ask you to load the extension. Click `Yes`
+In `Extension Wizard`, select `Select Extension`, go to \<your_download_folder\>/Needle_Path_planning. And click `Select Folder`. A window will pop up to ask you to load the extension. Click `Yes`
 ![image](https://github.com/dthung99/Image_guided_Navigation_for_Robotics_MSc_Project/assets/155381330/0e099e5c-dbdf-4611-9459-1f758e4713c1)
 
 You now can use the extension as other extension in 3D slicer!!!
@@ -42,21 +42,15 @@ Download this repository and unzip it on your Virtual Machine. Or
 
 	git clone https://github.com/dthung99/Image_guided_Navigation_for_Robotics_MSc_Project.git
 
-Go to your workspace. It is expected that you have already install [ROS-IGTL-Bridge](#prerequisites) in this workspace
+Copy two package `moveit_needle_sim` and `needle_path_simulation` from \<your_download_folder\>/ROS_needle_insert_simulation_ws/src into \<your_workspace\>/src folder in your workspace. It is expected that you have already install [ROS-IGTL-Bridge](#prerequisites) in this workspace.
 
+Go to your workspace `cd <your_workspace>`
 
-You will need to create you workspace following this tutorial
-You will need to install MoveIt package following this tutorial
-You will need to install ROS-IGTL-Bridge package in your workspace
-
-Download and unzip repository, copy two package moveit_needle_sim and needle_path_simulation into the src folder of your workspace
-mv <Your download folder>/ROS_needle_insert_simulation_ws/src <Your workspace>/src
-
-Build the package
-catkin_make
+Compile the code `catkin_make`
 
 Source your workspace in every new terminal you open
-source <Your workspace>/devel/setup.bash
+
+	source <Your workspace>/devel/setup.bash
 OR
 echo "source ~/<Your workspace>/devel/setup.bash" >> ~/.bashrc
 
