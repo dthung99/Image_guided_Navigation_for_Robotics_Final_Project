@@ -94,7 +94,7 @@ In ROS:
 	  sudo apt-get install ros-noetic-moveit
 	  sudo apt-get install ros-noetic-moveit-visual-tools
 - Remember to source your workspace.
-- If you continue to fail reinstall ROS and MoveIt.
+- If you continue to fail, reinstall ROS and MoveIt.
 
 ## Fails to compute the plan everytime
 - The brain and the needle path might be at an angle that causes the robot to colide itself. You can:
