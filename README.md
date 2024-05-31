@@ -1,5 +1,5 @@
 # Image_guided_Navigation_for_Robotics_Project
-This git repository is my submission for Image-guided Navigation for Robotics Module at King's College London. A video for demonstration of how to use it is available [here](https://emckclac-my.sharepoint.com/:v:/g/personal/k23133931_kcl_ac_uk/EZk3IHEwcylDiV8dwL06d54B1hmGNu8GzWmnpYw1AYWLkQ?e=YqZXIY&nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJTdHJlYW1XZWJBcHAiLCJyZWZlcnJhbFZpZXciOiJTaGFyZURpYWxvZy1MaW5rIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXcifSwicGxheWJhY2tPcHRpb25zIjp7fX0%3D)
+This git repository is my submission for Image-guided Navigation for Robotics Module at King's College London. A video for demonstration of how to use it is available [here](https://emckclac-my.sharepoint.com/:v:/g/personal/k23133931_kcl_ac_uk/EToyzYXS_E5FoYRTwVO0Fb4ByjAJ4v37i1HUjKc9YTx6VQ?e=h5SlIa&nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJTdHJlYW1XZWJBcHAiLCJyZWZlcnJhbFZpZXciOiJTaGFyZURpYWxvZy1MaW5rIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXcifX0%3D)
 
 # Introduction
 The project aim to create an extension in 3D slicer for planning a straight path for a needle to go into the brain and then send the information for simulation in ROS.
