@@ -12,9 +12,10 @@ Before using the program, you will need to install **_3D slicer_** on your **_Wi
 
 Note: The system might still work if you decided to install 3D slicer and ROS in a different way. However, the network setup between them might be different and you might need to edit the **user_parameters.yaml** file.
 
-Additionally, you will need to install **OpenIGTLinkIF** extension on **3D slicer** and **ROS-IGTL-Bridge** package on your **ROS workspace**.
+Additionally, you will need to install `OpenIGTLinkIF` extension on **3D slicer** and `ROS-IGTL-Bridge` package on your **ROS workspace** for communication; and `MoveIt` package in ROS for controlling the robot.
 - [Extension installation on 3D slicer](https://slicer.readthedocs.io/en/latest/user_guide/extensions_manager.html)
 - [ROS-IGTL-Bridge package installation on ROS](https://github.com/openigtlink/ROS-IGTL-Bridge)
+- [MoveIt installation](https://docs.ros.org/en/melodic/api/moveit_tutorials/html/doc/getting_started/getting_started.html#)
 
 # How to install the repository 
 ## 3D slicer
@@ -76,14 +77,46 @@ In ROS:
 - In the other terminal, run the communication and control nodes (Only run this node _**AFTER**_ turning the 3D `OpenIGTLinkIF` server _**ON**_:
 
 	  roslaunch needle_path_simulation needle_insertion.launch
-- Follow the instruction of ROS. 
-RUNNNNN
- !!! REMEMBER TO TURN 3D SLICER SERVER ON BEFORE RUNNING !!!
+- Follow the instruction of ROS. `RvizVisualToolsGui` is an essential component to interact with the code. If you don't see it, select `Panels` -> `RvizVisualToolsGui`
+![image](https://github.com/dthung99/Image_guided_Navigation_for_Robotics_MSc_Project/assets/155381330/2629aeb2-fa2b-4a1a-bc02-0e09d2cd350f)
+
+# Debugging
+## catkin_make fails :(
+- Make sure you have install all the necessary package: ros_igtl_bridge, moveit
+- Run `rospack list` to see what package are already installed. Normally, I would see ros_igtl_bridge, moveit_visual_tools, moveit_ros_core, moveit_msgs, and other moveit_... packages. If you can't find them, check your installation again. An example for install ROS package is:
+
+	  sudo apt-get update
+	  sudo apt-get install ros-noetic-moveit
+	  sudo apt-get install ros-noetic-moveit-visual-tools
+- Remember to source your workspace.
+- If you continue to fail reinstall ROS and MoveIt.
+
+## Fails to compute the plan everytime
+- The brain and the needle path might be at an angle that causes the robot to colide itself. You can:
+  + Try to rotate ± translate the brain model (`vtkMRMLModelNode`) and needle path (`vtkMRMLMarkupsFiducialNode`) using [Transforms module](https://slicer.readthedocs.io/en/latest/user_guide/modules/transforms.html) to a different pose that enable the robot to move.
+![image](https://github.com/dthung99/Image_guided_Navigation_for_Robotics_MSc_Project/assets/155381330/e3966376-5349-4c84-a6e3-8a6f135abdb0)
+
+  + Change the origins of the robot: you can move the robot around the world coordinate by changing the URDF file in \<your_workspace\>/src/needle_path_simulation/urdf/standard_test_Robot.urdf. The metrics that is advised to move is the origin xyz of \<joint name="base_to_part_1" type="revolute"\> ... \</joint\>.
+
+- Restart 3D slicer. Shut down and relaunch the ROS Nodes
+- Remember to turn 3D Slicer `OpenIGTLinkIF` server on before running ROS. There will be an error messages in the console if they can not connect.
+- Only open _**ONE**_ 3D slicer app. Opening two 3D servers might cause conflict.
+- Only launch _**ONE**_ time for each `roslaunch`. You might accidentally launch one launch files multiple times in one run.
+- Waiting might be an option! Sometime you might send a very heavy mesh to ROS (if your input label map is very big). Or you might set the velocity of the robot too low (by changing the user_parameters.yaml)
+
+## The robot do not move/the text do not change after clicking _**Next**_
+- Restart 3D slicer. Shut down and relaunch the ROS Nodes
+- Remember to turn 3D Slicer `OpenIGTLinkIF` server on before running ROS. There will be an error messages in the console if they can not connect.
+- Only open _**ONE**_ 3D slicer app. Opening two 3D servers might cause conflict.
+- Only launch _**ONE**_ time for each `roslaunch`. You might accidentally launch one launch files multiple times in one run.
+- Waiting might be an option! Sometime you might send a very heavy mesh to ROS (if your input label map is very big). Or you might set the velocity of the robot too low (by changing the user_parameters.yaml)
+
+- 
+
 
 Open a new terminal (Remember to source)
 
 FOLLOWING THE INSTRUCTION
-REMEMBER TO TURN RvizVisualToolsGui ON. If you don't see it, select Panels -> RvizVisualToolsGui
 To Fully visualize the simulation, make sure in the Displays tab, you have the following subsriber
 + MotionPlanning
 + MarkerArray: Topic should be /rviz_visual_tools
@@ -113,12 +146,3 @@ roslaunch <Your robot move it package> demo.launch
 roslaunch needle_path_simulation needle_insertion.launch
 
 
-DEBUGGING
-// If catkin_make fail, run
-rospack list 
-// To see if you have ros_igtl_bridge, moveit_visual_tools, moveit_ros_core, moveit_msgs, and other moveit package install !!! To install them:
-sudo apt-get update
-sudo apt install ros-noetic-moveit
-sudo apt-get install ros-noetic-moveit-visual-tools
-// If continnue to fail, make sure you have source the workspace
-// If you continue to fail Reinstall ROS and MoveIt
