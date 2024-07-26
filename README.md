@@ -1,6 +1,7 @@
 # Image_guided_Navigation_for_Robotics_Project
 This git repository is my submission for Image-guided Navigation for Robotics Module at King's College London. A video for demonstration of how to use it is available [here](https://youtu.be/wvMVf1MIXFw).
 
+https://github.com/dthung99/Image_guided_Navigation_for_Robotics_MSc_Project/blob/main/images/guide_video.mov
 
 https://github.com/user-attachments/assets/46468ed8-27d1-4b1d-9c03-927fd52702c5
 
