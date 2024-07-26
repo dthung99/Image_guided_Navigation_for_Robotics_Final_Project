@@ -1,6 +1,9 @@
 # Image_guided_Navigation_for_Robotics_Project
 This git repository is my submission for Image-guided Navigation for Robotics Module at King's College London. A video for demonstration of how to use it is available at the end of the README.
 
+<video src="images/guide_video.mov"></video>
+
+
 # Introduction
 The project aim to create an extension in 3D slicer for planning a straight path for a needle to go into the brain and then send the information for simulation in ROS.
 
