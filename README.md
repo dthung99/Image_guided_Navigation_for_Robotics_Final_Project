@@ -1,10 +1,5 @@
 # Image_guided_Navigation_for_Robotics_Project
-This git repository is my submission for Image-guided Navigation for Robotics Module at King's College London. A video for demonstration of how to use it is available [here](https://youtu.be/wvMVf1MIXFw).
-
-https://github.com/dthung99/Image_guided_Navigation_for_Robotics_MSc_Project/blob/main/images/guide_video.mov
-
-https://github.com/user-attachments/assets/46468ed8-27d1-4b1d-9c03-927fd52702c5
-
+This git repository is my submission for Image-guided Navigation for Robotics Module at King's College London. A video for demonstration of how to use it is available at the end of the README.
 
 # Introduction
 The project aim to create an extension in 3D slicer for planning a straight path for a needle to go into the brain and then send the information for simulation in ROS.
@@ -139,6 +134,10 @@ To Fully visualize the simulation, make sure in the `Displays` tab, the followin
 ![image](https://github.com/dthung99/Image_guided_Navigation_for_Robotics_MSc_Project/assets/155381330/9c1eb122-8a35-45b2-af95-9184465bebcc)
 
 When you prepare to move the robot in each stage, there will be a purple phantom that move before the robot move. If you don't want to see it, turn it off in `MotionPlanning` -> `Planned Path` -> `Show Robot Visual`. Or you can also speed it up/change its color there.
+
+# Guide Video
+
+https://github.com/user-attachments/assets/46468ed8-27d1-4b1d-9c03-927fd52702c5
 
 
 
