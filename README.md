@@ -1,4 +1,4 @@
-# Image_guided_Navigation_for_Robotics_Project
+# Image guided Navigation for Robotics Project
 This git repository is my submission for Image-guided Navigation for Robotics Module at King's College London. A video for demonstration of how to use it is available at the end of the README.
 
 # Introduction
